@@ -9,18 +9,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.pavi2410.appupdater.GitHubUpdater
-import com.pavi2410.appupdater.PlatformContext
+import com.pavi2410.appupdater.AppUpdater
+import com.pavi2410.appupdater.github
 import com.pavi2410.appupdater.ui.UpdateCard
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "App Updater Sample") {
         val updater = remember {
-            GitHubUpdater(
+            AppUpdater.github(
                 owner = "pavi2410",
                 repo = "kmp-app-updater",
                 currentVersion = "0.1.0",
-                platformContext = PlatformContext(),
             )
         }
 

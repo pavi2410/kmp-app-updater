@@ -12,30 +12,34 @@ class ConfigValidationTest {
     private val noopInstaller = object : AssetInstaller {
         override fun install(filePath: String) {}
     }
+    private val noopSource = object : UpdateSource {
+        override suspend fun fetchReleases() = emptyList<ReleaseInfo>()
+    }
 
     private fun updater(
-        owner: String = "owner",
-        repo: String = "repo",
         version: String = "1.0.0",
         assetMatcher: (String) -> Boolean = { true },
-    ) = GitHubUpdater(owner, repo, version, noopDownloader, noopInstaller, assetMatcher)
+    ) = AppUpdater(version, noopSource, noopDownloader, noopInstaller, assetMatcher)
+
+    private fun source(
+        owner: String = "owner",
+        repo: String = "repo",
+    ) = GitHubUpdateSource(owner, repo)
 
     @Test
     fun validConfig() {
         val u = updater()
-        assertEquals("owner", u.owner)
-        assertEquals("repo", u.repo)
         assertEquals("1.0.0", u.currentVersion)
     }
 
     @Test
     fun blankOwnerFails() {
-        assertFails { updater(owner = "") }
+        assertFails { source(owner = "") }
     }
 
     @Test
     fun blankRepoFails() {
-        assertFails { updater(repo = "") }
+        assertFails { source(repo = "") }
     }
 
     @Test
@@ -45,8 +49,8 @@ class ConfigValidationTest {
 
     @Test
     fun apiUrlIsCorrect() {
-        val u = updater(owner = "pavi2410", repo = "kmp-app-updater")
-        assertEquals("https://api.github.com/repos/pavi2410/kmp-app-updater/releases", u.apiUrl)
+        val s = source(owner = "pavi2410", repo = "kmp-app-updater")
+        assertEquals("https://api.github.com/repos/pavi2410/kmp-app-updater/releases", s.apiUrl)
     }
 
     @Test

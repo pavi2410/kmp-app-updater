@@ -9,7 +9,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.*
 
-class GitHubUpdaterTest {
+class AppUpdaterTest {
 
     private val latestReleaseJson = """
     {
@@ -72,15 +72,12 @@ class GitHubUpdaterTest {
         assetMatcher: (String) -> Boolean = { it.endsWith(".apk") },
         includePreReleases: Boolean = false,
         httpClient: HttpClient = createMockClient(latestReleaseJson),
-    ) = GitHubUpdater(
-        owner = "test",
-        repo = "repo",
+    ) = AppUpdater(
         currentVersion = version,
+        source = GitHubUpdateSource("test", "repo", includePreReleases, httpClient),
         downloader = fakeDownloader,
         installer = fakeInstaller,
         assetMatcher = assetMatcher,
-        includePreReleases = includePreReleases,
-        httpClient = httpClient,
     )
 
     @Test
@@ -118,8 +115,7 @@ class GitHubUpdaterTest {
 
         assertNull(result)
         val state = updater.state.value
-        assertIs<UpdateState.Error>(state)
-        assertTrue(state.message.contains("No matching asset"))
+        assertIs<UpdateState.UpToDate>(state)
     }
 
     @Test
@@ -134,7 +130,13 @@ class GitHubUpdaterTest {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-        val updater = updater(httpClient = client)
+        val updater = AppUpdater(
+            currentVersion = "0.2.0",
+            source = GitHubUpdateSource("test", "repo", httpClient = client),
+            downloader = fakeDownloader,
+            installer = fakeInstaller,
+            assetMatcher = { it.endsWith(".apk") },
+        )
         val result = updater.checkForUpdate()
 
         assertNull(result)
@@ -186,10 +188,10 @@ class GitHubUpdaterTest {
     fun configValidation() {
         assertFails { updater(version = "") }
         assertFails {
-            GitHubUpdater("", "repo", "1.0.0", fakeDownloader, fakeInstaller)
+            GitHubUpdateSource("", "repo")
         }
         assertFails {
-            GitHubUpdater("owner", "", "1.0.0", fakeDownloader, fakeInstaller)
+            GitHubUpdateSource("owner", "")
         }
     }
 
@@ -222,5 +224,33 @@ class GitHubUpdaterTest {
         // Should not pick up "0.4.0-beta" because toIntOrNull() on "0-beta" returns null
         // It will match "0.3.1" as the first valid newer release
         assertNotNull(result)
+    }
+
+    @Test
+    fun updaterWithInlineUpdateSource() = runTest {
+        val fakeSource = object : UpdateSource {
+            override suspend fun fetchReleases() = listOf(
+                ReleaseInfo(
+                    tagName = "v2.0.0",
+                    version = "2.0.0",
+                    changelog = "Big release",
+                    publishedAt = "2026-06-01T00:00:00Z",
+                    assets = listOf(ReleaseAsset("app.apk", "https://example.com/app.apk", 500)),
+                )
+            )
+        }
+
+        val updater = AppUpdater(
+            currentVersion = "1.0.0",
+            source = fakeSource,
+            downloader = fakeDownloader,
+            installer = fakeInstaller,
+            assetMatcher = { it.endsWith(".apk") },
+        )
+
+        val result = updater.checkForUpdate()
+        assertNotNull(result)
+        assertEquals("2.0.0", result.version)
+        assertIs<UpdateState.UpdateAvailable>(updater.state.value)
     }
 }

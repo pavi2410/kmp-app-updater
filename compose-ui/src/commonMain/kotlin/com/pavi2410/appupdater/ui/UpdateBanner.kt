@@ -7,7 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pavi2410.appupdater.GitHubUpdater
+import com.pavi2410.appupdater.AppUpdater
 import com.pavi2410.appupdater.UpdateState
 import kotlinx.coroutines.launch
 
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun UpdateBanner(
-    updater: GitHubUpdater,
+    updater: AppUpdater,
     modifier: Modifier = Modifier,
 ) {
     val state by updater.state.collectAsState()

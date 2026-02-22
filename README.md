@@ -3,12 +3,12 @@
 [![CI](https://github.com/pavi2410/kmp-app-updater/actions/workflows/ci.yml/badge.svg)](https://github.com/pavi2410/kmp-app-updater/actions/workflows/ci.yml)
 [![Instrumented Tests](https://github.com/pavi2410/kmp-app-updater/actions/workflows/instrumented.yml/badge.svg)](https://github.com/pavi2410/kmp-app-updater/actions/workflows/instrumented.yml)
 
-A Kotlin Multiplatform library for in-app updates via GitHub Releases. Supports **Android** and **Desktop (JVM)**.
+A Kotlin Multiplatform library for in-app updates. Supports **Android** and **Desktop (JVM)**.
 
 ## Features
 
-- Check GitHub Releases for newer versions with semver comparison
-- Streaming download with real progress reporting
+- Pluggable update sources — GitHub Releases out of the box, bring your own for GitLab / custom servers
+- Streaming download with real-time progress via `StateFlow<UpdateState>`
 - Platform-specific installation (APK intent on Android, OS launcher on Desktop)
 - Pre-built Compose Multiplatform UI components (optional)
 - Configurable asset matching (`.apk`, `.msi`, `.dmg`, etc.)
@@ -18,7 +18,7 @@ A Kotlin Multiplatform library for in-app updates via GitHub Releases. Supports 
 
 | Module | Description |
 |--------|-------------|
-| `:core` | Headless KMP library — models, GitHub API client, downloader, installer |
+| `:core` | Headless KMP library — `AppUpdater`, `UpdateSource`, downloader, installer |
 | `:compose-ui` | Optional Compose Multiplatform UI — `UpdateCard`, `DownloadProgressIndicator`, `UpdateBanner` |
 | `:sample:android` | Android demo app |
 | `:sample:desktop` | Desktop demo app |
@@ -27,16 +27,14 @@ A Kotlin Multiplatform library for in-app updates via GitHub Releases. Supports 
 
 ### Android
 
-Platform defaults (downloader, installer, asset matcher) are wired automatically via `PlatformContext`:
+Platform defaults (downloader, installer, asset matcher) are wired automatically:
 
 ```kotlin
-val platformContext = PlatformContext(applicationContext)
-
-val updater = GitHubUpdater(
+val updater = AppUpdater.github(
+    context = applicationContext,
     owner = "your-org",
     repo = "your-app",
-    currentVersion = platformContext.appVersionName(),
-    platformContext = platformContext,
+    // currentVersion auto-detected from PackageManager
 )
 
 // Check → Download → Install
@@ -48,23 +46,23 @@ updater.installUpdate()
 ### Desktop
 
 ```kotlin
-val updater = GitHubUpdater(
+val updater = AppUpdater.github(
     owner = "your-org",
     repo = "your-app",
     currentVersion = "1.0.0",
-    platformContext = PlatformContext(),
 )
 ```
 
-### Custom / Test
+### Custom Update Source
 
-Bring your own downloader and installer — no `PlatformContext` needed:
+Implement `UpdateSource` to connect any backend:
 
 ```kotlin
-val updater = GitHubUpdater(
-    owner = "your-org",
-    repo = "your-app",
+val updater = AppUpdater(
     currentVersion = "1.0.0",
+    source = object : UpdateSource {
+        override suspend fun fetchReleases() = listOf(/* your releases */)
+    },
     downloader = myDownloader,
     installer = myInstaller,
     assetMatcher = { it.endsWith(".msi") },
@@ -86,6 +84,18 @@ Idle → Checking → UpdateAvailable → Downloading(progress) → ReadyToInsta
 ```
 
 Observe `updater.state: StateFlow<UpdateState>` for reactive UI updates.
+
+```kotlin
+// Compose
+val state by updater.state.collectAsState()
+when (state) {
+    is UpdateState.Downloading -> DownloadProgressIndicator(state.progress, ...)
+    // ...
+}
+
+// Coroutines
+updater.state.collect { state -> /* react */ }
+```
 
 ## Android Setup
 
