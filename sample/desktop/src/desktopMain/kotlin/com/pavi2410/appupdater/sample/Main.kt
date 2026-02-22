@@ -20,6 +20,7 @@ fun main() = application {
                 owner = "pavi2410",
                 repo = "kmp-app-updater",
                 currentVersion = "0.1.0",
+                includePreReleases = true,
             )
         }
 

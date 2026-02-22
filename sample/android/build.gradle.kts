@@ -16,10 +16,19 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("release.keystore")
+            storePassword = "samplepass"
+            keyAlias = "sample"
+            keyPassword = "samplepass"
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

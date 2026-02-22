@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
                     context = applicationContext,
                     owner = "pavi2410",
                     repo = "kmp-app-updater",
+                    includePreReleases = true,
                 )
             }
 

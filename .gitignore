@@ -27,3 +27,6 @@ desktop.ini
 
 # Local properties
 local.properties
+
+# Sample release keystore (shared via CI secret, not committed)
+sample/android/release.keystore

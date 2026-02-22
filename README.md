@@ -97,6 +97,63 @@ when (state) {
 updater.state.collect { state -> /* react */ }
 ```
 
+## Background Updates
+
+### Android (WorkManager)
+
+Use [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) to check for updates periodically in the background:
+
+```kotlin
+class UpdateCheckWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        val updater = AppUpdater.github(
+            context = applicationContext,
+            owner = "your-org",
+            repo = "your-app",
+        )
+        val release = updater.checkForUpdate()
+        if (release != null) {
+            // Show a notification prompting the user to update
+        }
+        return Result.success()
+    }
+}
+
+// Schedule periodic checks (e.g. once every 24 hours)
+val request = PeriodicWorkRequestBuilder<UpdateCheckWorker>(24, TimeUnit.HOURS)
+    .setConstraints(
+        Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+    )
+    .build()
+
+WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+    "update_check",
+    ExistingPeriodicWorkPolicy.KEEP,
+    request,
+)
+```
+
+### Desktop (Coroutine Timer)
+
+On Desktop JVM, use a coroutine-based timer to poll for updates:
+
+```kotlin
+fun startBackgroundUpdateCheck(updater: AppUpdater, scope: CoroutineScope) {
+    scope.launch {
+        while (isActive) {
+            updater.checkForUpdate()
+            delay(24.hours)
+        }
+    }
+}
+```
+
 ## Android Setup
 
 Add to your `AndroidManifest.xml`:
