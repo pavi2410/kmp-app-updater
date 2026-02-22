@@ -8,6 +8,32 @@ plugins {
 mavenPublishing {
     publishToMavenCentral()
     signAllPublications()
+
+    pom {
+        name = "KMP App Updater Core"
+        description = "Headless KMP library for in-app updates — models, update sources, downloader, installer."
+        inceptionYear = "2025"
+        url = "https://github.com/pavi2410/kmp-app-updater/"
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+        developers {
+            developer {
+                id = "pavi2410"
+                name = "Pavitra"
+                url = "https://github.com/pavi2410/"
+            }
+        }
+        scm {
+            url = "https://github.com/pavi2410/kmp-app-updater/"
+            connection = "scm:git:git://github.com/pavi2410/kmp-app-updater.git"
+            developerConnection = "scm:git:ssh://git@github.com/pavi2410/kmp-app-updater.git"
+        }
+    }
 }
 
 kotlin {

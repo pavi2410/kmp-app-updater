@@ -1,11 +1,12 @@
-name: Release
+name: Publish
 
 on:
-  push:
-    tags: [ "v*" ]
+  release:
+    types: [released, prereleased]
 
 jobs:
   publish:
+    name: Release build and publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,18 +16,19 @@ jobs:
           java-version: 25
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Set release version from tag
         run: echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
       - name: Run all tests before publishing
-        run: ./gradlew :core:allTests --no-daemon
+        run: ./gradlew :core:allTests
 
       - name: Publish to Maven Central
-        run: ./gradlew publishToMavenCentral --no-daemon -PVERSION_NAME=${{ env.VERSION_NAME }}
+        run: ./gradlew publishToMavenCentral --no-configuration-cache -PVERSION_NAME=${{ env.VERSION_NAME }}
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}

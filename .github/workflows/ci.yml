@@ -17,10 +17,10 @@ jobs:
           java-version: 25
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Run core unit tests (common + desktop)
-        run: ./gradlew :core:allTests --no-daemon
+        run: ./gradlew :core:allTests
 
       - name: Upload test results
         if: always()
