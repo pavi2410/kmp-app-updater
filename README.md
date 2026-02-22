@@ -1,0 +1,1 @@
+kmp-app-updater
