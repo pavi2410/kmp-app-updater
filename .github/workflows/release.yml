@@ -4,9 +4,12 @@ on:
   release:
     types: [released, prereleased]
 
+permissions:
+  contents: write
+
 jobs:
   publish:
-    name: Release build and publish
+    name: Publish to Maven Central
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +24,7 @@ jobs:
       - name: Set release version from tag
         run: echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
-      - name: Run all tests before publishing
+      - name: Run all tests
         run: ./gradlew :core:allTests
 
       - name: Publish to Maven Central
@@ -32,3 +35,54 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+
+  build-sample-apk:
+    name: Build sample APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Build release APK
+        run: ./gradlew :sample:android:assembleRelease
+
+      - name: Upload APK to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sample/android/build/outputs/apk/release/android-release.apk
+
+  build-desktop:
+    name: Build desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            glob: "sample/desktop/build/compose/binaries/main/deb/*.deb"
+          - os: windows-latest
+            glob: "sample/desktop/build/compose/binaries/main/msi/*.msi"
+          - os: macos-latest
+            glob: "sample/desktop/build/compose/binaries/main/dmg/*.dmg"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: temurin
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Build desktop distribution
+        run: ./gradlew :sample:desktop:packageDistributionForCurrentOS
+
+      - name: Upload desktop build to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.glob }}
