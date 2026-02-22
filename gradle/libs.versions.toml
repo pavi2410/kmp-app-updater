@@ -14,10 +14,6 @@ androidxWork = "2.10.0"
 androidxLifecycle = "2.10.0"
 androidxActivity = "1.12.4"
 
-junit = "4.13.2"
-androidxTestRunner = "1.6.2"
-androidxTestCore = "1.6.1"
-mockwebserver = "4.12.0"
 spotless = "8.2.0"
 mavenPublish = "0.36.0"
 
@@ -52,11 +48,6 @@ compose-material3 = { group = "org.jetbrains.compose.material3", name = "materia
 # Compose BOM (Android sample)
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 
-# Testing
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
-androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref = "androidxTestCore" }
-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

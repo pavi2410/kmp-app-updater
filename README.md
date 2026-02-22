@@ -1,7 +1,7 @@
 # kmp-app-updater
 
 [![CI](https://github.com/pavi2410/kmp-app-updater/actions/workflows/ci.yml/badge.svg)](https://github.com/pavi2410/kmp-app-updater/actions/workflows/ci.yml)
-[![Instrumented Tests](https://github.com/pavi2410/kmp-app-updater/actions/workflows/instrumented.yml/badge.svg)](https://github.com/pavi2410/kmp-app-updater/actions/workflows/instrumented.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/com.pavi2410.kmp-app-updater/core)](https://central.sonatype.com/namespace/com.pavi2410.kmp-app-updater)
 
 A Kotlin Multiplatform library for in-app updates. Supports **Android** and **Desktop (JVM)**.
 

@@ -54,7 +54,9 @@ All tests use Ktor's `MockEngine` to simulate GitHub API responses without netwo
 
 ### Mock v99 Release
 
-A pre-release `v99.0.0` exists on GitHub for integration testing. The sample apps use `includePreReleases = true` so they detect it. This lets you test the full update flow (check → download → install) without affecting real library releases.
+A pre-release `v99.0.0` exists on GitHub for manual integration testing. The sample apps use `includePreReleases = true` so they detect it. This lets you test the full update flow (check → download → install) without affecting real library releases.
+
+**Important:** Both the installed app and the v99 APK must be signed with the same keystore. The shared `sample/android/release.keystore` ensures this.
 
 To rebuild the v99 test APK locally:
 
@@ -65,14 +67,6 @@ To rebuild the v99 test APK locally:
 # 3. Upload to GitHub release
 gh release upload v99.0.0 sample/android/build/outputs/apk/release/android-release.apk --clobber
 # 4. Revert the version changes
-```
-
-### Instrumented Tests (`core/src/androidDeviceTest/`)
-
-Device tests for `AndroidAssetDownloader` and `AndroidAssetInstaller`. Require a connected device or emulator:
-
-```bash
-./gradlew :core:connectedAndroidDeviceTest
 ```
 
 ## Signing
