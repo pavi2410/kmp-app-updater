@@ -27,20 +27,15 @@ compose.desktop {
         mainClass = "com.pavi2410.appupdater.sample.MainKt"
 
         nativeDistributions {
+            targetFormats(
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
+            )
             packageName = "kmp-app-updater-sample"
             packageVersion = "1.0.0"
             description = "KMP App Updater sample desktop app"
             vendor = "pavi2410"
-
-            linux {
-                debPackageVersion = "1.0.0"
-            }
-            windows {
-                msiPackageVersion = "1.0.0"
-            }
-            macOS {
-                dmgPackageVersion = "1.0.0"
-            }
         }
     }
 }
