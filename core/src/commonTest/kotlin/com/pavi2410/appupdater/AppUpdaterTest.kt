@@ -253,4 +253,107 @@ class AppUpdaterTest {
         assertEquals("2.0.0", result.version)
         assertIs<UpdateState.UpdateAvailable>(updater.state.value)
     }
+
+    @Test
+    fun fullEndToEndWithMockV99Release() = runTest {
+        val v99ReleaseJson = """
+        {
+            "tag_name": "v99.0.0",
+            "name": "v99.0.0",
+            "body": "Major milestone release with all the features.",
+            "published_at": "2030-01-01T00:00:00Z",
+            "prerelease": false,
+            "draft": false,
+            "assets": [
+                {
+                    "name": "app-release.apk",
+                    "browser_download_url": "https://github.com/test/repo/releases/download/v99.0.0/app-release.apk",
+                    "size": 52428800,
+                    "content_type": "application/vnd.android.package-archive"
+                },
+                {
+                    "name": "app-setup.msi",
+                    "browser_download_url": "https://github.com/test/repo/releases/download/v99.0.0/app-setup.msi",
+                    "size": 104857600,
+                    "content_type": "application/x-msi"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val mockClient = createMockClient(v99ReleaseJson)
+        val updater = AppUpdater(
+            currentVersion = "1.0.0",
+            source = GitHubUpdateSource("test", "repo", httpClient = mockClient),
+            downloader = fakeDownloader,
+            installer = fakeInstaller,
+            assetMatcher = { it.endsWith(".apk") },
+        )
+
+        // 1. Check — should find v99.0.0
+        val release = updater.checkForUpdate()
+        assertNotNull(release)
+        assertEquals("99.0.0", release.version)
+        assertEquals("Major milestone release with all the features.", release.changelog)
+        val available = updater.state.value
+        assertIs<UpdateState.UpdateAvailable>(available)
+        assertEquals("app-release.apk", available.asset.name)
+        assertEquals(52428800, available.asset.size)
+
+        // 2. Download
+        val path = updater.downloadUpdate()
+        assertNotNull(path)
+        assertEquals("/tmp/fake/app-release.apk", path)
+        assertIs<UpdateState.ReadyToInstall>(updater.state.value)
+
+        // 3. Install
+        updater.installUpdate()
+        assertEquals("/tmp/fake/app-release.apk", fakeInstaller.lastPath)
+
+        // 4. Reset
+        updater.reset()
+        assertIs<UpdateState.Idle>(updater.state.value)
+    }
+
+    @Test
+    fun v99ReleaseDesktopAssetMatcher() = runTest {
+        val v99ReleaseJson = """
+        {
+            "tag_name": "v99.0.0",
+            "name": "v99.0.0",
+            "body": "Desktop release",
+            "published_at": "2030-01-01T00:00:00Z",
+            "prerelease": false,
+            "draft": false,
+            "assets": [
+                {
+                    "name": "app-release.apk",
+                    "browser_download_url": "https://github.com/test/repo/releases/download/v99.0.0/app-release.apk",
+                    "size": 50000000
+                },
+                {
+                    "name": "app-setup.msi",
+                    "browser_download_url": "https://github.com/test/repo/releases/download/v99.0.0/app-setup.msi",
+                    "size": 100000000
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val mockClient = createMockClient(v99ReleaseJson)
+        val updater = AppUpdater(
+            currentVersion = "0.5.0",
+            source = GitHubUpdateSource("test", "repo", httpClient = mockClient),
+            downloader = fakeDownloader,
+            installer = fakeInstaller,
+            assetMatcher = { it.endsWith(".msi") },
+        )
+
+        val release = updater.checkForUpdate()
+        assertNotNull(release)
+        val state = updater.state.value
+        assertIs<UpdateState.UpdateAvailable>(state)
+        assertEquals("app-setup.msi", state.asset.name)
+        assertEquals(100000000, state.asset.size)
+    }
 }

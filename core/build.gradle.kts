@@ -1,11 +1,27 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.maven.publish)
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 }
 
 kotlin {
-    androidTarget()
+    androidLibrary {
+        namespace = "com.pavi2410.kmpappupdater.core"
+        compileSdk = 36
+        minSdk = 24
+
+        withHostTest {}
+        withDeviceTest {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
+    }
+
     jvm("desktop")
 
     compilerOptions {
@@ -34,15 +50,13 @@ kotlin {
             implementation(libs.androidx.work.runtime.ktx)
         }
 
-        val androidInstrumentedTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation(libs.androidx.test.runner)
-                implementation(libs.androidx.test.core)
-                implementation(libs.mockwebserver)
-                implementation(libs.kotlinx.coroutines.test)
-                implementation(libs.ktor.client.okhttp)
-            }
+        getByName("androidDeviceTest").dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.test.core)
+            implementation(libs.mockwebserver)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.okhttp)
         }
 
         val desktopMain by getting {
@@ -59,15 +73,4 @@ kotlin {
             }
         }
     }
-}
-
-android {
-    namespace = "com.pavi2410.kmpappupdater.core"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 24
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
 }
