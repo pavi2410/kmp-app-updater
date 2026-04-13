@@ -1,0 +1,53 @@
+product:
+  type: lib
+  platforms: [android, jvm]
+
+repositories:
+  - id: mavenCentral
+    url: https://oss.sonatype.org/service/local/staging/deploy/maven2/
+    publish: true
+    credentials:
+      file: ./publish.properties
+      usernameKey: MAVEN_CENTRAL_USERNAME
+      passwordKey: MAVEN_CENTRAL_PASSWORD
+
+dependencies:
+  - $ktor.client.core
+  - $ktor.client.contentNegotiation
+  - $ktor.serialization.kotlinx.json
+  - $libs.kotlinx.coroutines.core
+  - $libs.kotlinx.datetime
+
+dependencies@android:
+  - $ktor.client.okhttp
+  - $libs.androidx.core.ktx
+  - $libs.androidx.work.runtime.ktx
+
+dependencies@jvm:
+  - $ktor.client.java
+
+test-dependencies:
+  - $kotlin.test
+  - $ktor.client.mock
+  - $libs.kotlinx.coroutines.test
+
+test-dependencies@jvm:
+  - $kotlin.test
+  - $ktor.client.mock
+  - $libs.kotlinx.coroutines.test
+
+settings:
+  kotlin:
+    serialization: json
+    freeCompilerArgs: ["-Xexpect-actual-classes"]
+  ktor:
+    enabled: true
+    version: 3.4.0
+  android:
+    namespace: com.pavi2410.kmpappupdater.core
+    compileSdk: 36
+    minSdk: 24
+  publishing:
+    enabled: true
+    group: "com.pavi2410"
+    version: "0.1.0"

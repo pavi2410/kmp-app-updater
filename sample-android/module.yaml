@@ -1,0 +1,30 @@
+product: android/app
+
+dependencies:
+  - ../core
+  - ../compose-ui
+  - $compose.foundation
+  - $compose.material3
+  - $libs.androidx.core.ktx
+  - $libs.androidx.activity.compose
+  - $libs.androidx.lifecycle.runtime.ktx
+  - $ktor.client.okhttp
+
+settings:
+  android:
+    namespace: com.pavi2410.appupdater.sample
+    applicationId: com.pavi2410.appupdater.sample
+    compileSdk: 36
+    minSdk: 24
+    signing:
+      enabled: true
+      propertiesFile: ./keystore.properties
+    targetSdk: 36
+    versionCode: 1
+    versionName: "0.1.0"
+  ktor:
+    enabled: true
+    version: 3.4.0
+  compose:
+    enabled: true
+    version: 1.10.1

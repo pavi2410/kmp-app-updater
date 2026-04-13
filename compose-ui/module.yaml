@@ -1,0 +1,22 @@
+product:
+  type: lib
+  platforms: [android, jvm]
+
+dependencies:
+  - ../core
+  - $compose.foundation
+  - $compose.material3
+  - $compose.ui
+  - $libs.kotlinx.coroutines.core
+
+dependencies@android:
+  - $libs.androidx.activity.compose
+
+settings:
+  android:
+    namespace: com.pavi2410.kmpappupdater.composeui
+    compileSdk: 36
+    minSdk: 24
+  compose:
+    enabled: true
+    version: 1.10.1

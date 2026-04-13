@@ -1,0 +1,19 @@
+product: jvm/app
+
+dependencies:
+  - ../core
+  - ../compose-ui
+  - $compose.desktop.currentOs
+  - $compose.material3
+  - $ktor.client.java
+  - $libs.kotlinx.coroutines.core
+
+settings:
+  jvm:
+    mainClass: com.pavi2410.appupdater.sample.MainKt
+  ktor:
+    enabled: true
+    version: 3.4.0
+  compose:
+    enabled: true
+    version: 1.10.1
