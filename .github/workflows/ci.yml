@@ -14,17 +14,17 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          java-version: 25
+          java-version: 21
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v5
-
-      - name: Run core unit tests (common + desktop)
-        run: ./gradlew :core:allTests
+      - name: Run tests
+        run: ./amper test
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: "**/build/reports/tests/"
+          path: |
+            build/reports/
+            build/logs/

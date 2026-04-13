@@ -35,9 +35,12 @@ kmp-app-updater/
 ./amper build -m compose-ui
 
 # Build sample APK (release variant)
-./amper package -m sample-android -v release
+./amper build -m sample-android -v release
 
-# Build desktop distribution for current OS
+# Build desktop JAR
+./amper build -m sample-desktop
+
+# Package desktop as Executable JAR (self-contained with embedded dependencies)
 ./amper package -m sample-desktop
 
 # Run desktop sample
@@ -68,9 +71,9 @@ To rebuild the v99 test APK locally:
 ```bash
 # 1. Temporarily set versionCode=99, versionName="99.0.0" in sample-android/module.yaml
 # 2. Build
-./amper package -m sample-android -v release
+./amper build -m sample-android -v release
 # 3. Upload to GitHub release
-gh release upload v99.0.0 build/tasks/_android_packageRelease/android-release.apk --clobber
+gh release upload v99.0.0 build/tasks/_sample-android_buildAndroidRelease/gradle-project-release-unsigned.apk --clobber
 # 4. Revert the version changes
 ```
 
@@ -107,13 +110,22 @@ Then update the CI secret:
 base64 sample-android/release.keystore | gh secret set SAMPLE_KEYSTORE_BASE64
 ```
 
-### Library Signing (Maven Central)
+### Library Publishing (Maven Central)
 
-Library artifacts are signed with a GPG key for Maven Central publication.
+The `core` library is automatically published to Maven Central as part of the release workflow.
 
-- **Key ID:** last 8 chars stored in `SIGNING_KEY_ID` secret
-- **Private key:** ASCII-armored, stored in `GPG_KEY_CONTENTS` secret
-- **Passphrase:** stored in `SIGNING_PASSWORD` secret
+**Required GitHub Secrets:**
+- `MAVEN_CENTRAL_USERNAME` — Sonatype JIRA username
+- `MAVEN_CENTRAL_PASSWORD` — Sonatype JIRA password or auth token
+
+**Note:** Amper's current publish implementation publishes JVM artifacts. For a KMP library, consumers resolve platform-specific variants through Gradle's multiplatform support.
+
+To set credentials:
+
+```bash
+gh secret set MAVEN_CENTRAL_USERNAME --body "your-username"
+gh secret set MAVEN_CENTRAL_PASSWORD --body "your-password-or-token"
+```
 
 ## CI/CD
 
@@ -131,20 +143,21 @@ Triggered by GitHub release events (released or prereleased):
 ```
 test (gate)
   ├── publish (Maven Central)
-  ├── build-sample-apk (+ upload to release)
-  └── build-desktop × 3 OS (linux/windows/macos → deb/msi/dmg)
+  ├── build-sample-android (+ upload APK to release)
+  └── build-desktop (single executable JAR)
 ```
 
-All jobs depend on the `test` job — if tests fail, nothing publishes.
+All jobs depend on the `test` job — if tests fail, no release assets are built.
 
 ### Publishing a New Version
 
-1. Update `versionName` in `sample-android/module.yaml` and project version metadata (remove `-SNAPSHOT`)
+1. Update `versionName` in `sample-android/module.yaml` and project version metadata
 2. Commit and push to `main`
 3. Create a GitHub release with tag `vX.Y.Z`
 4. The workflow automatically:
    - Runs tests
-   - Publishes `core` and `compose-ui` to Maven Central
-   - Builds and attaches sample APK + desktop installers
-5. Go to [Maven Central Deployments](https://central.sonatype.com/publishing/deployments) and click **Publish**
-6. After release, bump the version to next `-SNAPSHOT`
+   - Publishes the `core` library to Maven Central
+   - Builds and attaches a signed Android APK
+  - Builds and attaches a desktop executable JAR
+
+Until Amper closes those gaps, Maven Central publishing should remain a separate manual or alternative-tooling step.

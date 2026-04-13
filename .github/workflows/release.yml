@@ -16,13 +16,11 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          java-version: 25
+          java-version: 21
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v5
-
       - name: Run all tests
-        run: ./gradlew :core:allTests
+        run: ./amper test
 
   publish:
     name: Publish to Maven Central
@@ -33,22 +31,21 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          java-version: 25
+          java-version: 21
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v5
+      - name: Create publish credentials
+        run: |
+          cat > core/publish.properties <<'EOF'
+          MAVEN_CENTRAL_USERNAME=${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD=${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          EOF
 
-      - name: Publish to Maven Central
-        run: ./gradlew publishToMavenCentral --no-configuration-cache -PVERSION_NAME=${GITHUB_REF_NAME#v}
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+      - name: Publish core library to Maven Central
+        run: ./amper publish -m core -r mavenCentral
 
-  build-sample-apk:
-    name: Build sample APK
+  build-sample-android:
+    name: Build sample Android APK
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -56,49 +53,47 @@ jobs:
 
       - uses: actions/setup-java@v5
         with:
-          java-version: 25
+          java-version: 21
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v5
-
       - name: Decode release keystore
-        run: echo "${{ secrets.SAMPLE_KEYSTORE_BASE64 }}" | base64 -d > sample/android/release.keystore
+        run: |
+          echo "${{ secrets.SAMPLE_KEYSTORE_BASE64 }}" | base64 -d > sample-android/release.keystore
+          cat > sample-android/keystore.properties <<'EOF'
+          storeFile=./release.keystore
+          storePassword=samplepass
+          keyAlias=sample
+          keyPassword=samplepass
+          EOF
 
-      - name: Build release APK
-        run: ./gradlew :sample:android:assembleRelease
+      - name: Build release Android APK
+        run: ./amper build -m sample-android -v release
 
-      - name: Upload APK to release
+      - name: Upload Android APK to release
         uses: softprops/action-gh-release@v2
         with:
-          files: sample/android/build/outputs/apk/release/android-release.apk
+          files: build/tasks/_sample-android_buildAndroidRelease/gradle-project-release-unsigned.apk
 
   build-desktop:
-    name: Build desktop (${{ matrix.os }})
+    name: Build desktop executable jar
     needs: test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            glob: "sample/desktop/build/compose/binaries/main/deb/*.deb"
-          - os: windows-latest
-            glob: "sample/desktop/build/compose/binaries/main/msi/*.msi"
-          - os: macos-latest
-            glob: "sample/desktop/build/compose/binaries/main/dmg/*.dmg"
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v5
         with:
-          java-version: 25
+          java-version: 21
           distribution: temurin
 
-      - uses: gradle/actions/setup-gradle@v5
+      - name: Build desktop executable jar
+        run: ./amper package -m sample-desktop
 
-      - name: Build desktop distribution
-        run: ./gradlew :sample:desktop:packageDistributionForCurrentOS
+      - name: Rename desktop artifact
+        shell: bash
+        run: cp build/tasks/_sample-desktop_executableJarJvm/sample-desktop-jvm-executable.jar sample-desktop-executable.jar
 
       - name: Upload desktop build to release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.glob }}
+          files: sample-desktop-executable.jar

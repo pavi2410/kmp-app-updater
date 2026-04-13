@@ -16,6 +16,9 @@ settings:
     applicationId: com.pavi2410.appupdater.sample
     compileSdk: 36
     minSdk: 24
+    signing:
+      enabled: true
+      propertiesFile: ./keystore.properties
     targetSdk: 36
     versionCode: 1
     versionName: "0.1.0"
